@@ -13,8 +13,11 @@ app.use(express.static(__dirname + '/public'))
 io.on('connection', (socket) => {
 
 console.log('nueva conexion: ',socket.id);
+socket.emit('nuevaConexion');
 
-
+// socket.on('pong' ,() => {
+//     console.log('pong recibido del cliente');
+// })
 
 })
 
