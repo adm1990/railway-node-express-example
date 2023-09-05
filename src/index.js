@@ -57,9 +57,9 @@ io.on('connection', (socket) => {
       if (indexUsuario === -1) {
         listaLobbies[existeSala].usuarios.push(objetoSocket.usuario);
         console.log('ya existia, solo añadimos el usuario');
-        io.in(objetoSocket.idSala).emit("usuarioUnidoSala",  listaLobbies[existeSala].usuarios);
-
       }
+      io.in(objetoSocket.idSala).emit("usuarioUnidoSala",  listaLobbies[existeSala].usuarios);
+
 
     }
 
@@ -183,8 +183,26 @@ if (indexUsuario !==-1) {
       console.log('mi posicion delante de mi', usuarioDelanteDeMi);
 
       if (usuarioDelanteDeMi) {
+        const miUsuario = usuariosCarrera.find(usuario => usuario.uid === objetoSocket['idUsuario']);
+
+        const misItems = miUsuario.objetosEquipados
+        console.log('estos son mis items',misItems);
+
+        const itemLanzado = misItems.findIndex(item => item.id === objetoSocket['idItem']);
+        console.log('este es el item lanzado',itemLanzado);
+
+        misItems.splice(itemLanzado, 1); // Elimina el usuario con el uid dado
+
+        console.log('item eliminado', misItems);
+
+        const objetoItemLanzado = {
+          usuarioAfectado: usuarioDelanteDeMi,
+          usuarioQueLanza:miUsuario
+
+        }
+
         usuarioDelanteDeMi.puntuacion -= 20
-        io.in(objetoSocket.idSala).emit("lanzarObjeto", usuarioDelanteDeMi);
+        io.in(objetoSocket.idSala).emit("lanzarObjeto", objetoItemLanzado);
 
       }
     
