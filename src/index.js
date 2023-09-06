@@ -44,7 +44,7 @@ io.on('connection', (socket) => {
 
       listaLobbies.push(objetoSala)
       console.log('añadimos y creamos sala', listaLobbies);
-      io.in(objetoSocket.idSala).emit("usuarioUnidoSala",  listaLobbies[0].usuarios);
+      io.in(objetoSocket.idSala).emit("usuarioUnidoSala",  objetoSala.usuarios);
 
     } else {
 
