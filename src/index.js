@@ -129,7 +129,12 @@ if (indexUsuario !==-1) {
   usuarioQueHaCorrido.puntuacion = objetoSocket.pasos;
   usuarioQueHaCorrido.localizacion = (usuarioQueHaCorrido.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - 40);
 
-  io.in(objetoSocket.idSala).emit("corriendo", usuarioQueHaCorrido);
+  const resultado = {
+    usuarioQueHaCorrido:usuarioQueHaCorrido,
+    listaUsuarios:lobbyCarrera.usuarios
+
+  }
+  io.in(objetoSocket.idSala).emit("corriendo", resultado);
 
 }
 
@@ -176,15 +181,10 @@ if (indexUsuario !==-1) {
     .findIndex(sala => sala.id === objetoSocket.idSala);
     if (existeSala !== -1) {
       var usuariosCarrera = listaLobbies[existeSala].usuarios
-      console.log('usuarios de la carrera');
       usuariosCarrera.sort((a, b) => b.puntuacion - a.puntuacion);
       const posicionUsuario = usuariosCarrera.findIndex(usuario => usuario.uid === objetoSocket['idUsuario']);
-      console.log('mi posicion actual', posicionUsuario);
       const usuarioDelanteDeMi = usuariosCarrera[posicionUsuario - 1]
-      console.log('mi posicion delante de mi', usuarioDelanteDeMi.alias);
-      console.log('ITEMS DE MI RIVAL', usuarioDelanteDeMi.alias);
       const primerUsuario = usuariosCarrera[0]
-      console.log('El pimer usuario es',primerUsuario.alias);
       const miUsuario = usuariosCarrera.find(usuario => usuario.uid === objetoSocket['idUsuario']);
       const misItems = miUsuario.objetosEquipados
       const itemLanzado = misItems.findIndex(item => item.id === objetoSocket['idItem']);
@@ -194,17 +194,17 @@ if (indexUsuario !==-1) {
         misItems.splice(itemLanzado, 1); // Elimina el usuario con el uid dado
         console.log('item eliminado', misItems);
 
-        var usuarioObjetivoTieneEscudo = usuarioDelanteDeMi.objetosEquipados.findIndex(item => item.id === 7);
+        var usuarioObjetivoTieneEscudo = usuarioDelanteDeMi.objetosEquipados?.findIndex(item => item.id === 7);
   
         if (objetoSocket['idItem'] === 6) {
-           usuarioObjetivoTieneEscudo = primerUsuario.objetosEquipados.findIndex(item => item.id === 7);
+           usuarioObjetivoTieneEscudo = primerUsuario.objetosEquipados?.findIndex(item => item.id === 7);
         }
 
 
         console.log('TIENE ESCUDO',usuarioObjetivoTieneEscudo);
         console.log('ha usado',objetoSocket['idItem']);
 
-        if (usuarioObjetivoTieneEscudo === -1 || usuarioObjetivoTieneEscudo === undefined ) {
+        if ((usuarioObjetivoTieneEscudo === -1 || usuarioObjetivoTieneEscudo === undefined)  ) {
           if (objetoSocket['impacto']) {
             console.log('el objeto tiene impacto');
   
@@ -258,10 +258,16 @@ if (indexUsuario !==-1) {
           }
         } else {
 
+
+
           if (objetoSocket['idItem'] === 6) {
             primerUsuario.objetosEquipados.splice(usuarioObjetivoTieneEscudo, 1); 
          } else {
-          usuarioDelanteDeMi.objetosEquipados.splice(usuarioObjetivoTieneEscudo, 1); 
+if ( objetoSocket['idItem'] !== 1) {
+  usuarioDelanteDeMi.objetosEquipados.splice(usuarioObjetivoTieneEscudo, 1); 
+
+}
+
 
          }
 
