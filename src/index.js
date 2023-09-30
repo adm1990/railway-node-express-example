@@ -69,34 +69,20 @@ io.on('connection', (socket) => {
   });
 
 
-  socket.on('gravedad', (objetoCarrera) => {
-    const existeSala = listaLobbies
-      .findIndex(sala => sala.id === objetoCarrera.idSala);
-    if (existeSala !== -1) {
-
-      //localizamos el usuario.
-      var usuario = listaLobbies[existeSala].usuarios
-      .find(usuario => usuario.uid === objetoCarrera.usuario.uid);
-
-      usuario.posicion = objetoCarrera.usuario.posicion;
-
-
-      io.in(objetoCarrera.idSala).emit("aplicarGravedad", listaLobbies[existeSala].usuarios);
-
-
-    }
-
-
-  });
 
   socket.on('eliminarSala', (objetoSocket) => {
-    const existeSalaIndex = listaLobbies.findIndex(sala => sala.id === objetoSocket);
+    try {
+      const existeSalaIndex = listaLobbies.findIndex(sala => sala.id === objetoSocket);
 
-    if (existeSalaIndex !== -1) {
-        listaLobbies.splice(existeSalaIndex, 1); 
-      io.in(objetoSocket).emit("salaEliminada", true);
-
+      if (existeSalaIndex !== -1) {
+          listaLobbies.splice(existeSalaIndex, 1); 
+        io.in(objetoSocket).emit("salaEliminada", true);
+  
+      }
+    } catch (error) {
+      
     }
+  
 
 
 
@@ -104,18 +90,23 @@ io.on('connection', (socket) => {
 
 
   socket.on('abandonarSala', (objetoSocket) => {
-    const existeSala = listaLobbies.find(sala => sala.id === objetoSocket.idSala)
-    const existeSalaIndex = listaLobbies.findIndex(sala => sala.id === objetoSocket.idSala);
-
-    var lobbyCarrera;
-    if (existeSala) {
-      const indexUsuario = existeSala.usuarios
-        .findIndex(usuario => usuario.uid === objetoSocket.id);
-      existeSala.usuarios.splice(indexUsuario, 1); // Elimina el usuario con el uid dado
-      socket.leave(objetoSocket.idSala);
-
-      io.in(existeSala.id).emit("usuarioAbandonaSala", existeSala.usuarios);
-
+    try {
+      const existeSala = listaLobbies.find(sala => sala.id === objetoSocket.idSala)
+      const existeSalaIndex = listaLobbies.findIndex(sala => sala.id === objetoSocket.idSala);
+  
+      var lobbyCarrera;
+      if (existeSala) {
+        const indexUsuario = existeSala.usuarios
+          .findIndex(usuario => usuario.uid === objetoSocket.id);
+        existeSala.usuarios.splice(indexUsuario, 1); // Elimina el usuario con el uid dado
+        socket.leave(objetoSocket.idSala);
+  
+        io.in(existeSala.id).emit("usuarioAbandonaSala", existeSala.usuarios);
+  
+      }
+  
+    } catch (error) {
+      
     }
 
 
@@ -135,31 +126,38 @@ io.on('connection', (socket) => {
   });
 
   socket.on('correr', (objetoSocket) => {
+    try {
+      
     const existeSala = listaLobbies
-      .findIndex(sala => sala.id === objetoSocket.idSala);
-    if (existeSala !== -1) {
-      var lobbyCarrera = listaLobbies[existeSala]
-      const indexUsuario = lobbyCarrera.usuarios
-        .findIndex(usuario => usuario.uid === objetoSocket.idUsuario);
+    .findIndex(sala => sala.id === objetoSocket.idSala);
+  if (existeSala !== -1) {
+    var lobbyCarrera = listaLobbies[existeSala]
+    const indexUsuario = lobbyCarrera.usuarios
+      .findIndex(usuario => usuario.uid === objetoSocket.idUsuario);
 
-      if (indexUsuario !== -1) {
-        const usuarioQueHaCorrido = lobbyCarrera.usuarios[indexUsuario]
-        usuarioQueHaCorrido.puntuacion = objetoSocket.pasos;
+    if (indexUsuario !== -1) {
+      const usuarioQueHaCorrido = lobbyCarrera.usuarios[indexUsuario]
+      usuarioQueHaCorrido.puntuacion = objetoSocket.pasos;
 
-        // usuarioQueHaCorrido.localizacion = (usuarioQueHaCorrido.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - objetoSocket['altoJugador']);
-        // console.log('llegamos');
-        const resultado = {
-          usuarioQueHaCorrido: usuarioQueHaCorrido,
-          listaUsuarios: lobbyCarrera.usuarios
-
-        }
-        io.in(objetoSocket.idSala).emit("corriendo", resultado);
+      // usuarioQueHaCorrido.localizacion = (usuarioQueHaCorrido.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - objetoSocket['altoJugador']);
+      // console.log('llegamos');
+      const resultado = {
+        usuarioQueHaCorrido: usuarioQueHaCorrido,
+        listaUsuarios: lobbyCarrera.usuarios
 
       }
-
-
+      io.in(objetoSocket.idSala).emit("corriendo", resultado);
 
     }
+
+
+
+  }
+
+    } catch (error) {
+      
+    }
+
 
 
 
@@ -187,7 +185,8 @@ io.on('connection', (socket) => {
 
   socket.on('lanzarObjeto', (objetoSocket) => {
 
-    const existeSala = listaLobbies
+    try {
+      const existeSala = listaLobbies
       .findIndex(sala => sala.id === objetoSocket.idSala);
     if (existeSala !== -1) {
       var usuariosCarrera = listaLobbies[existeSala].usuarios
@@ -305,6 +304,12 @@ io.on('connection', (socket) => {
 
 
     }
+
+      
+    } catch (error) {
+      
+    }
+
 
 
 
