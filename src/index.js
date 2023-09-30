@@ -92,9 +92,9 @@ io.on('connection', (socket) => {
   socket.on('eliminarSala', (objetoSocket) => {
     const existeSalaIndex = listaLobbies.findIndex(sala => sala.id === objetoSocket);
 
-    if (existeSala !== -1) {
+    if (existeSalaIndex !== -1) {
         listaLobbies.splice(existeSalaIndex, 1); 
-      io.in(existeSala.id).emit("salaEliminada", true);
+      io.in(objetoSocket).emit("salaEliminada", true);
 
     }
 
