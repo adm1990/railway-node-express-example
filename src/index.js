@@ -35,7 +35,7 @@ io.on('connection', (socket) => {
       }
 
       listaLobbies.push(objetoSala)
-      io.in(objetoSocket.idSala).emit("usuarioUnidoSala",  objetoSala.usuarios);
+      io.in(objetoSocket.idSala).emit("usuarioUnidoSala", objetoSala.usuarios);
 
     } else {
 
@@ -47,7 +47,7 @@ io.on('connection', (socket) => {
       if (indexUsuario === -1) {
         listaLobbies[existeSala].usuarios.push(objetoSocket.usuario);
       }
-      io.in(objetoSocket.idSala).emit("usuarioUnidoSala",  listaLobbies[existeSala].usuarios);
+      io.in(objetoSocket.idSala).emit("usuarioUnidoSala", listaLobbies[existeSala].usuarios);
 
 
     }
@@ -61,7 +61,6 @@ io.on('connection', (socket) => {
 
     if (existeSala !== -1) {
       var lobbyCarrera = listaLobbies[existeSala]
-    
       io.in(idCarrera).emit("obtenerLobby", lobbyCarrera);
 
     }
@@ -70,19 +69,54 @@ io.on('connection', (socket) => {
   });
 
 
+  socket.on('gravedad', (objetoCarrera) => {
+    const existeSala = listaLobbies
+      .findIndex(sala => sala.id === objetoCarrera.idSala);
+    if (existeSala !== -1) {
+
+      //localizamos el usuario.
+      var usuario = listaLobbies[existeSala].usuarios
+      .find(usuario => usuario.uid === objetoCarrera.usuario.uid);
+
+      usuario.posicion = objetoCarrera.usuario.posicion;
+
+
+      io.in(objetoCarrera.idSala).emit("aplicarGravedad", listaLobbies[existeSala].usuarios);
+
+
+    }
+
+
+  });
+
+  socket.on('eliminarSala', (objetoSocket) => {
+    const existeSalaIndex = listaLobbies.findIndex(sala => sala.id === objetoSocket);
+
+    if (existeSala !== -1) {
+        listaLobbies.splice(existeSalaIndex, 1); 
+      io.in(existeSala.id).emit("salaEliminada", true);
+
+    }
+
+
+
+  });
+
 
   socket.on('abandonarSala', (objetoSocket) => {
-
     const existeSala = listaLobbies.find(sala => sala.id === objetoSocket.idSala)
-      var lobbyCarrera;
+    const existeSalaIndex = listaLobbies.findIndex(sala => sala.id === objetoSocket.idSala);
+
+    var lobbyCarrera;
     if (existeSala) {
       const indexUsuario = existeSala.usuarios
         .findIndex(usuario => usuario.uid === objetoSocket.id);
-        existeSala.usuarios.splice(indexUsuario, 1); // Elimina el usuario con el uid dado
+      existeSala.usuarios.splice(indexUsuario, 1); // Elimina el usuario con el uid dado
       socket.leave(objetoSocket.idSala);
-      io.in(existeSala.id).emit("usuarioAbandonaSala",existeSala.usuarios);
 
-    } 
+      io.in(existeSala.id).emit("usuarioAbandonaSala", existeSala.usuarios);
+
+    }
 
 
 
@@ -102,27 +136,28 @@ io.on('connection', (socket) => {
 
   socket.on('correr', (objetoSocket) => {
     const existeSala = listaLobbies
-    .findIndex(sala => sala.id === objetoSocket.idSala);
+      .findIndex(sala => sala.id === objetoSocket.idSala);
     if (existeSala !== -1) {
       var lobbyCarrera = listaLobbies[existeSala]
       const indexUsuario = lobbyCarrera.usuarios
         .findIndex(usuario => usuario.uid === objetoSocket.idUsuario);
 
-if (indexUsuario !==-1) {
-  const usuarioQueHaCorrido = lobbyCarrera.usuarios[indexUsuario]
-  usuarioQueHaCorrido.puntuacion = objetoSocket.pasos;
-  usuarioQueHaCorrido.localizacion = (usuarioQueHaCorrido.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - 40);
+      if (indexUsuario !== -1) {
+        const usuarioQueHaCorrido = lobbyCarrera.usuarios[indexUsuario]
+        usuarioQueHaCorrido.puntuacion = objetoSocket.pasos;
 
-  const resultado = {
-    usuarioQueHaCorrido:usuarioQueHaCorrido,
-    listaUsuarios:lobbyCarrera.usuarios
+        // usuarioQueHaCorrido.localizacion = (usuarioQueHaCorrido.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - objetoSocket['altoJugador']);
+        // console.log('llegamos');
+        const resultado = {
+          usuarioQueHaCorrido: usuarioQueHaCorrido,
+          listaUsuarios: lobbyCarrera.usuarios
 
-  }
-  io.in(objetoSocket.idSala).emit("corriendo", resultado);
+        }
+        io.in(objetoSocket.idSala).emit("corriendo", resultado);
 
-}
+      }
 
- 
+
 
     }
 
@@ -140,131 +175,130 @@ if (indexUsuario !==-1) {
         .findIndex(usuario => usuario.uid === objetoSocket.usuario.uid);
 
       if (indexUsuario !== -1) {
-        lobbyCarrera.usuarios[indexUsuario] =objetoSocket.usuario;
-  
+        lobbyCarrera.usuarios[indexUsuario] = objetoSocket.usuario;
+
         io.in(objetoSocket.idSala).emit("usuarioListo", lobbyCarrera.usuarios);
 
       }
     }
-
-
-
-
-
-
-
   });
+
+
 
   socket.on('lanzarObjeto', (objetoSocket) => {
 
     const existeSala = listaLobbies
-    .findIndex(sala => sala.id === objetoSocket.idSala);
+      .findIndex(sala => sala.id === objetoSocket.idSala);
     if (existeSala !== -1) {
       var usuariosCarrera = listaLobbies[existeSala].usuarios
-      usuariosCarrera.sort((a, b) => b.puntuacion - a.puntuacion);
-      const posicionUsuario = usuariosCarrera.findIndex(usuario => usuario.uid === objetoSocket['idUsuario']);
-      const usuarioDelanteDeMi = usuariosCarrera[posicionUsuario - 1]
-      const primerUsuario = usuariosCarrera[0]
+      var carreraOrdenada = Object.values( listaLobbies[existeSala].usuarios);
+      var escudosRestanes = 0;
+      var restarEscudo = false;
+      carreraOrdenada.sort((a, b) => b.puntuacion - a.puntuacion);
+      const posicionUsuario = carreraOrdenada.findIndex(usuario => usuario.uid === objetoSocket['idUsuario']);
+      const primerUsuarioOrdenado = carreraOrdenada[0]
+      var usuarioDelanteDeMiOrdenado = carreraOrdenada[posicionUsuario - 1]
+      var usuarioDelanteDeMi
+
+      if (usuarioDelanteDeMiOrdenado) {
+         usuarioDelanteDeMi =  usuariosCarrera.find(usuario => usuario.uid === usuarioDelanteDeMiOrdenado.uid);
+      }
+
+      const primerUsuario =  usuariosCarrera.find(usuario => usuario.uid === primerUsuarioOrdenado.uid);
       const miUsuario = usuariosCarrera.find(usuario => usuario.uid === objetoSocket['idUsuario']);
       const misItems = miUsuario.objetosEquipados
       const itemLanzado = misItems.findIndex(item => item.id === objetoSocket['idItem']);
+
+      if (objetoSocket['idItem'] === 6) {
+        usuarioDelanteDeMi = primerUsuario
+      }
+
 
 
       if (usuarioDelanteDeMi) {
         misItems.splice(itemLanzado, 1); // Elimina el usuario con el uid dado
 
         var usuarioObjetivoTieneEscudo = usuarioDelanteDeMi.objetosEquipados?.findIndex(item => item.id === 7);
-  
-        if (objetoSocket['idItem'] === 6) {
-           usuarioObjetivoTieneEscudo = primerUsuario.objetosEquipados?.findIndex(item => item.id === 7);
-        }
 
 
-
-
-        if ((usuarioObjetivoTieneEscudo === -1 || usuarioObjetivoTieneEscudo === undefined)  ) {
+        if ((usuarioObjetivoTieneEscudo === -1 || usuarioObjetivoTieneEscudo === undefined)) {
           if (objetoSocket['impacto']) {
-  
+
             if (objetoSocket['idItem'] !== 1) { // 1 es el potenciador que va por otro lado.
               usuarioDelanteDeMi.puntuacion -= objetoSocket['impacto']
-              usuarioDelanteDeMi.localizacion = (usuarioDelanteDeMi.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - 40);
+              // usuarioDelanteDeMi.localizacion = (usuarioDelanteDeMi.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - objetoSocket['altoJugador']);
 
             }
-       
-  
+
+
           } else {
-  
+
             if (objetoSocket['idItem'] === 2) {
 
               const puntuacionRival = usuarioDelanteDeMi.puntuacion;
               const miPuntuacion = miUsuario.puntuacion;
               usuarioDelanteDeMi.puntuacion = miPuntuacion;
               miUsuario.puntuacion = puntuacionRival;
-              miUsuario.localizacion = (miUsuario.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - 40);
-              usuarioDelanteDeMi.localizacion = (usuarioDelanteDeMi.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - 40);
+              // miUsuario.localizacion = (miUsuario.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - objetoSocket['altoJugador']);
+              // usuarioDelanteDeMi.localizacion = (usuarioDelanteDeMi.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - objetoSocket['altoJugador']);
 
-            } else if (objetoSocket['idItem'] === 3){
+            } else if (objetoSocket['idItem'] === 3) {
               usuarioDelanteDeMi.puntuacion = 0;
-              usuarioDelanteDeMi.localizacion = (usuarioDelanteDeMi.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - 40);
+              // usuarioDelanteDeMi.localizacion = (usuarioDelanteDeMi.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - objetoSocket['altoJugador']);
 
             }
-            else if (objetoSocket['idItem'] === 4){
-              usuarioDelanteDeMi.puntuacion =  miUsuario.puntuacion -1;
-              usuarioDelanteDeMi.localizacion = (usuarioDelanteDeMi.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - 40);
+            else if (objetoSocket['idItem'] === 4) {
+              usuarioDelanteDeMi.puntuacion = miUsuario.puntuacion - 1;
+              // usuarioDelanteDeMi.localizacion = (usuarioDelanteDeMi.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - objetoSocket['altoJugador']);
 
             }
-            else if (objetoSocket['idItem'] === 5){
-             miUsuario.puntuacion = usuarioDelanteDeMi.puntuacion +1
-             miUsuario.localizacion = (miUsuario.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - 40);
+            else if (objetoSocket['idItem'] === 5) {
+              miUsuario.puntuacion = usuarioDelanteDeMi.puntuacion + 1
+              // miUsuario.localizacion = (miUsuario.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - objetoSocket['altoJugador']);
 
-  
+
             }
-            else if (objetoSocket['idItem'] === 6){
+            else if (objetoSocket['idItem'] === 6) {
 
-       
-                miUsuario.puntuacion = primerUsuario.puntuacion +1;
-                miUsuario.localizacion = (miUsuario.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - 40);
 
-             }
-  
+              miUsuario.puntuacion = primerUsuario.puntuacion + 1;
+              // miUsuario.localizacion = (miUsuario.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - objetoSocket['altoJugador']);
+
+            }
+
           }
         } else {
-
-
-
-          if (objetoSocket['idItem'] === 6) {
-            primerUsuario.objetosEquipados.splice(usuarioObjetivoTieneEscudo, 1); 
-         } else {
-if ( objetoSocket['idItem'] !== 1) {
-  usuarioDelanteDeMi.objetosEquipados.splice(usuarioObjetivoTieneEscudo, 1); 
-
-}
-
-
-         }
+          escudosRestanes = usuarioDelanteDeMi.objetosEquipados.find(item => item.id === 7).cantidad;
+          usuarioDelanteDeMi.objetosEquipados.splice(usuarioObjetivoTieneEscudo, 1);
+          restarEscudo = true;
 
         }
 
 
-    
 
 
 
-      } 
+
+      }
 
       if (objetoSocket['idItem'] === 1) {
         misItems.splice(itemLanzado, 1); // Elimina el usuario con el uid dado
         miUsuario.puntuacion += objetoSocket['impacto']
-        miUsuario.localizacion = (miUsuario.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - 40);
+        usuarioDelanteDeMi =miUsuario;
+        // miUsuario.localizacion = (miUsuario.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - objetoSocket['altoJugador']);
       }
-    
+
       const objetoRespuesta = {
-        usuarios: usuariosCarrera,
-        idUsuario:objetoSocket['idUsuario'],
-        itemCantidad:objetoSocket['itemCantidad'],
-        itemNombre:objetoSocket['itemNombre'],
+        usuarios: listaLobbies[existeSala].usuarios,
+        idUsuario: objetoSocket['idUsuario'],
+        itemCantidad: objetoSocket['itemCantidad'],
+        itemNombre: objetoSocket['itemNombre'],
+        itemIcono:objetoSocket['itemIcono'],
+        usuarioAfectado: usuarioDelanteDeMi,
+        restarEscudo:restarEscudo,
+        escudosRestantes:escudosRestanes
       }
-      
+
       io.in(objetoSocket.idSala).emit("lanzarObjeto", objetoRespuesta);
 
 
@@ -283,7 +317,7 @@ if ( objetoSocket['idItem'] !== 1) {
 
 
   socket.on('expulsarUsuario', (objetoSocket) => {
-       io.in(objetoSocket.idSala).emit("detectarExpulsion",objetoSocket);
+    io.in(objetoSocket.idSala).emit("detectarExpulsion", objetoSocket);
 
   });
 
@@ -297,7 +331,7 @@ if ( objetoSocket['idItem'] !== 1) {
 
 
   socket.on('anfitrionEliminaSala', (objetoSocket) => {
-    io.in(objetoSocket).emit("avisoEliminarSala",objetoSocket);
+    io.in(objetoSocket).emit("avisoEliminarSala", objetoSocket);
 
 
   });
