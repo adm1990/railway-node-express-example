@@ -3,6 +3,8 @@ import { Server as WebSocketServer } from 'socket.io'
 import http from 'http'
 import cors from 'cors'; // Importa el paquete cors
 
+import compression from 'compression';
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
@@ -16,6 +18,7 @@ const io = new WebSocketServer(server, {
 
 const listaLobbies = [];
 app.use(express.static(__dirname + '/public'))
+app.use(compression());
 
 io.on('connection', (socket) => {
 
