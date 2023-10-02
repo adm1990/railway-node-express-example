@@ -20,6 +20,7 @@ app.use(express.static(__dirname + '/public'))
 io.on('connection', (socket) => {
 
   socket.emit('nuevaConexion');
+  console.log("Nueva conexion")
 
   socket.on('conectarSala', (objetoSocket) => {
     objetoSocket.usuario.socket = socket.id;
@@ -51,12 +52,10 @@ io.on('connection', (socket) => {
 
 
       if ( listaLobbies[existeSala].usuarios.length <= objetoSocket.jugadores) {
-        console.log('A');
         socket.join(objetoSocket.idSala);
         io.in(objetoSocket.idSala).emit("usuarioUnidoSala", listaLobbies[existeSala].usuarios);
 
       } else {
-        console.log('B');
         socket.emit("usuarioUnidoSala", "lleno");
 
       }
