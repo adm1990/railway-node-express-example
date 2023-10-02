@@ -22,13 +22,14 @@ io.on('connection', (socket) => {
   socket.emit('nuevaConexion');
 
   socket.on('conectarSala', (objetoSocket) => {
-    socket.join(objetoSocket.idSala);
     objetoSocket.usuario.socket = socket.id;
 
     const existeSala = listaLobbies
       .findIndex(sala => sala.id === objetoSocket.idSala);
 
     if (existeSala === -1) {
+      socket.join(objetoSocket.idSala);
+
       var objetoSala = {
         id: objetoSocket.idSala,
         usuarios: [objetoSocket.usuario]
@@ -47,7 +48,19 @@ io.on('connection', (socket) => {
       if (indexUsuario === -1) {
         listaLobbies[existeSala].usuarios.push(objetoSocket.usuario);
       }
-      io.in(objetoSocket.idSala).emit("usuarioUnidoSala", listaLobbies[existeSala].usuarios);
+
+
+      if ( listaLobbies[existeSala].usuarios.length <= objetoSocket.jugadores) {
+        console.log('A');
+        socket.join(objetoSocket.idSala);
+        io.in(objetoSocket.idSala).emit("usuarioUnidoSala", listaLobbies[existeSala].usuarios);
+
+      } else {
+        console.log('B');
+        socket.emit("usuarioUnidoSala", "lleno");
+
+      }
+
 
 
     }
