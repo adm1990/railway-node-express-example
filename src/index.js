@@ -23,7 +23,6 @@ app.use(compression());
 io.on('connection', (socket) => {
 
   socket.emit('nuevaConexion');
-  console.log("Nueva conexion")
 
   socket.on('conectarSala', (objetoSocket) => {
     objetoSocket.usuario.socket = socket.id;
@@ -107,14 +106,18 @@ io.on('connection', (socket) => {
   socket.on('abandonarSala', (objetoSocket) => {
     try {
       const existeSala = listaLobbies.find(sala => sala.id === objetoSocket.idSala)
-      const existeSalaIndex = listaLobbies.findIndex(sala => sala.id === objetoSocket.idSala);
   
-      var lobbyCarrera;
       if (existeSala) {
         const indexUsuario = existeSala.usuarios
           .findIndex(usuario => usuario.uid === objetoSocket.id);
-        existeSala.usuarios.splice(indexUsuario, 1); // Elimina el usuario con el uid dado
-        socket.leave(objetoSocket.idSala);
+          if (indexUsuario !== -1) { 
+
+            existeSala.usuarios.splice(indexUsuario, 1); // Elimina el usuario con el uid dado
+            socket.leave(objetoSocket.idSala);
+          }
+
+
+
   
         io.in(existeSala.id).emit("usuarioAbandonaSala", existeSala.usuarios);
   
@@ -155,7 +158,6 @@ io.on('connection', (socket) => {
       usuarioQueHaCorrido.puntuacion = objetoSocket.pasos;
 
       // usuarioQueHaCorrido.localizacion = (usuarioQueHaCorrido.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - objetoSocket['altoJugador']);
-      // console.log('llegamos');
       const resultado = {
         usuarioQueHaCorrido: usuarioQueHaCorrido,
         listaUsuarios: lobbyCarrera.usuarios
