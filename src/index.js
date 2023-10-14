@@ -106,7 +106,6 @@ io.on('connection', (socket) => {
   socket.on('abandonarSala', (objetoSocket) => {
     try {
       const existeSala = listaLobbies.find(sala => sala.id === objetoSocket.idSala)
-  
       if (existeSala) {
         const indexUsuario = existeSala.usuarios
           .findIndex(usuario => usuario.uid === objetoSocket.id);
@@ -118,8 +117,8 @@ io.on('connection', (socket) => {
 
 
 
-  
-        io.in(existeSala.id).emit("usuarioAbandonaSala", existeSala.usuarios);
+  console.log('llegamos aqui',existeSala.id);
+        io.in(existeSala.id).emit("usuarioAbandonaSala", existeSala);
   
       }
   
