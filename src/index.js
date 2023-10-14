@@ -232,20 +232,20 @@ io.on('connection', (socket) => {
 
 
       if (usuarioDelanteDeMi) {
-        misItems.splice(itemLanzado, 1); // Elimina el usuario con el uid dado
+        // misItems.splice(itemLanzado, 1); // Elimina el usuario con el uid dado
 
         var usuarioObjetivoTieneEscudo = usuarioDelanteDeMi.objetosEquipados?.findIndex(item => item.id === 7);
-
-
+       
         if ((usuarioObjetivoTieneEscudo === -1 || usuarioObjetivoTieneEscudo === undefined)) {
+          // si no tiene escudo
           if (objetoSocket['impacto']) {
 
             if (objetoSocket['idItem'] !== 1) { // 1 es el potenciador que va por otro lado.
               usuarioDelanteDeMi.puntuacion -= objetoSocket['impacto']
               // usuarioDelanteDeMi.localizacion = (usuarioDelanteDeMi.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - objetoSocket['altoJugador']);
+              misItems.splice(itemLanzado, 1); // Elimina el usuario con el uid dado
 
-            }
-
+            } 
 
           } else {
 
@@ -281,19 +281,17 @@ io.on('connection', (socket) => {
               // miUsuario.localizacion = (miUsuario.puntuacion / objetoSocket['maximoTotalPasos']) * (objetoSocket['anchoDelDiv'] - objetoSocket['altoJugador']);
 
             }
+            misItems.splice(itemLanzado, 1); // Elimina el usuario con el uid dado
 
           }
         } else {
+          //si tiene escudo
           escudosRestanes = usuarioDelanteDeMi.objetosEquipados.find(item => item.id === 7).cantidad;
           usuarioDelanteDeMi.objetosEquipados.splice(usuarioObjetivoTieneEscudo, 1);
+          misItems.splice(itemLanzado, 1); // Elimina el usuario con el uid dado
           restarEscudo = true;
 
         }
-
-
-
-
-
 
       }
 
