@@ -23,7 +23,6 @@ app.use(compression());
 io.on('connection', (socket) => {
 
   socket.emit('nuevaConexion');
-  console.log('arrancamos')
   socket.on('conectarSala', (objetoSocket) => {
     objetoSocket.usuario.socket = socket.id;
 
@@ -117,7 +116,6 @@ io.on('connection', (socket) => {
 
 
 
-  console.log('llegamos aqui',existeSala.id);
         io.in(existeSala.id).emit("usuarioAbandonaSala", existeSala);
   
       }
@@ -137,15 +135,15 @@ io.on('connection', (socket) => {
   });
 
   socket.on('usuarioListoCarrera', (objetoSocket) => {
-    console.log('usuario listo carrera',objetoSocket);
+ 
     io.in(objetoSocket.idSala).emit("usuarioListoCarrera", objetoSocket);
 
 
   });
 
   socket.on('anfitrionInactivo', (objetoSocket) => {
-    console.log('anfitrionInactivo',objetoSocket);
-    io.in(objetoSocket.idSala).emit("anfitrionInactivo", "");
+   
+    io.in(objetoSocket).emit("anfitrionInactivo",objetoSocket );
 
 
   });
@@ -197,7 +195,6 @@ io.on('connection', (socket) => {
 
       if (indexUsuario !== -1) {
         lobbyCarrera.usuarios[indexUsuario] = objetoSocket.usuario;
-        console.log('devolvemos listo');
         io.in(objetoSocket.idSala).emit("usuarioListo", lobbyCarrera.usuarios);
 
       }
