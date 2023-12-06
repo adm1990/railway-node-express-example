@@ -141,6 +141,8 @@ io.on('connection', (socket) => {
 
   });
 
+
+
   socket.on('anfitrionInactivo', (objetoSocket) => {
    
     io.in(objetoSocket).emit("anfitrionInactivo",objetoSocket );
@@ -358,6 +360,13 @@ io.on('connection', (socket) => {
 
 
   });
+
+
+  socket.on('suscribirChat', (objetoSocket) => {
+    socket.broadcast.emit("mensajesNuevosChat", objetoSocket);
+
+  });
+
 
   socket.on('disconnect', () => {
   });
