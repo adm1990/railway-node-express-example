@@ -2,6 +2,7 @@ import express from 'express'
 import { Server as WebSocketServer } from 'socket.io'
 import http from 'http'
 import cors from 'cors'; // Importa el paquete cors
+import { v4 as uuidv4 } from 'uuid';
 
 import compression from 'compression';
 
@@ -17,6 +18,8 @@ const io = new WebSocketServer(server, {
 });
 
 const listaLobbies = [];
+const listaDuelos = [];
+const listaDuelosSalas = [];
 app.use(express.static(__dirname + '/public'))
 app.use(compression());
 
@@ -66,6 +69,119 @@ io.on('connection', (socket) => {
     }
 
   });
+
+
+  socket.on('buscarPartida', (objetoSocket) => {
+    objetoSocket.socket = socket.id;
+    listaDuelos.push(objetoSocket)
+
+    const maxTiempoSegundos = 20; // Número máximo de segundos para la búsqueda
+    let tiempoTranscurrido = 0;
+    let primerRival = null;
+    
+    let miUsuarioEnDuelo = listaDuelos.findIndex(usuario => usuario.usuario === objetoSocket.usuario);
+
+    const temporizador = setInterval(() => {
+      tiempoTranscurrido++;
+      primerRival = listaDuelos.find(objeto => objeto.usuario !== objetoSocket.usuario && objeto.estado === 'buscando');
+      let primerRivalPosicion = listaDuelos.findIndex(objeto => objeto.usuario !== objetoSocket.usuario && objeto.estado === 'buscando');
+
+      miUsuarioEnDuelo = listaDuelos.findIndex(usuario => usuario.usuario === objetoSocket.usuario);
+
+      if (miUsuarioEnDuelo === -1) {
+        clearInterval(temporizador);
+        return;
+      }
+
+      if (primerRivalPosicion !== -1) {
+        clearInterval(temporizador);
+        const nuevoUUID = uuidv4();
+
+        primerRival.idSala= nuevoUUID;
+        primerRival.posicion= 2;
+        primerRival.socketRival =objetoSocket.socket;
+
+        objetoSocket.idSala = nuevoUUID;
+        objetoSocket.posicion= 1;    
+        objetoSocket.socketRival = primerRival.socket;
+        listaDuelos.splice(primerRivalPosicion, 1); 
+        listaDuelos.splice(miUsuarioEnDuelo, 1);
+
+        const objetoSala = {
+          id:nuevoUUID,
+          usuario1:objetoSocket,
+          usuario2:primerRival      
+        }
+
+        listaDuelosSalas.push(objetoSala)
+        socket.emit("partidaEncontrada",primerRival)
+        socket.to(primerRival.socket).emit("partidaEncontrada",objetoSocket)
+
+        // Puedes continuar con el código después de encontrar al primer rival
+      } else if (tiempoTranscurrido >= maxTiempoSegundos) {
+        clearInterval(temporizador);
+        socket.emit("partidaEncontrada","Limite de tiempo")
+
+        console.log(`Se ha agotado el tiempo después de ${maxTiempoSegundos} segundos. No se encontró un rival.`);
+        // Puedes manejar la situación cuando no se encuentra un rival después del tiempo especificado
+      } else {
+        socket.emit("partidaEncontrada","buscando...")
+
+        console.log(`Tiempo transcurrido: ${tiempoTranscurrido} segundos. Continuando la búsqueda...`);
+        // Puedes agregar un pequeño retraso aquí si es necesario
+        // await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }, 1000); // Este temporizador se ejecuta cada segundo
+
+  });
+
+
+  socket.on('aceptarDuelo', (objetoSocket) => {
+    socket.join(objetoSocket.idSala);
+  });
+
+
+  socket.on('rechazarDuelo', (objetoSocket) => {
+    io.to(objetoSocket.socket).emit("rechazarDuelo", objetoSocket);
+
+  });
+
+  socket.on('comenzarCarrera', (objetoSocket) => {
+ 
+    console.log('comenzarCarrera',objetoSocket);
+    io.in(objetoSocket.id).emit("comenzarCarrera", objetoSocket);
+    
+  });
+
+  socket.on('correrDuelo', (objetoCorrer) => {
+ 
+    console.log('correrDuelo',objetoCorrer);
+    const puntuacionObj = {
+      puntuacion:objetoCorrer.puntuacion
+    }
+    io.to(objetoCorrer.socket).emit("correrDuelo", puntuacionObj);
+    
+  });
+
+  
+
+  socket.on('usuarioUnidoADuelo', (objetoSocket) => {
+ console.log('usuario unido a duelo',objetoSocket);
+ let sala = listaDuelosSalas.find(objeto => objeto.id === objetoSocket.idSala);
+console.log('SALA',sala);
+ if (sala.usuario1.usuario===objetoSocket.usuario) {
+  sala.usuario1.listo =true;
+ }
+
+ if (sala.usuario2.usuario===objetoSocket.usuario) {
+  sala.usuario2.listo =true;
+ }
+
+ io.in(objetoSocket.idSala).emit("usuarioUnidoADuelo", sala);
+
+    
+  });
+
 
 
   socket.on('obtenerLobbyCarrera', (idCarrera) => {
