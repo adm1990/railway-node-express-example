@@ -121,7 +121,8 @@ io.on('connection', (socket) => {
       } else if (tiempoTranscurrido >= maxTiempoSegundos) {
         clearInterval(temporizador);
         socket.emit("partidaEncontrada","Limite de tiempo")
-
+         miUsuarioEnDuelo = listaDuelos.findIndex(usuario => usuario.usuario === objetoSocket.usuario);
+        listaDuelos.splice(miUsuarioEnDuelo, 1);
         console.log(`Se ha agotado el tiempo después de ${maxTiempoSegundos} segundos. No se encontró un rival.`);
         // Puedes manejar la situación cuando no se encuentra un rival después del tiempo especificado
       } else {
