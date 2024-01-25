@@ -142,6 +142,12 @@ io.on('connection', (socket) => {
 
 
   socket.on('rechazarDuelo', (objetoSocket) => {
+    let salaEncontrada = listaDuelosSalas.findIndex(sala => sala.id === objetoSocket.idSala);
+    if (salaEncontrada !== -1) {
+      listaDuelos.splice(salaEncontrada, 1);
+
+    }
+
     io.to(objetoSocket.socket).emit("rechazarDuelo", objetoSocket);
 
   });
