@@ -75,7 +75,7 @@ io.on('connection', (socket) => {
     objetoSocket.socket = socket.id;
     listaDuelos.push(objetoSocket)
 
-    const maxTiempoSegundos = 20; // Número máximo de segundos para la búsqueda
+    const maxTiempoSegundos = 5; // Número máximo de segundos para la búsqueda
     let tiempoTranscurrido = 0;
     let primerRival = null;
     
