@@ -72,6 +72,9 @@ io.on('connection', (socket) => {
 
 
   socket.on('buscarPartida', (objetoSocket) => {
+    try {
+      
+ 
     objetoSocket.socket = socket.id;
     listaDuelos.push(objetoSocket)
 
@@ -135,6 +138,10 @@ io.on('connection', (socket) => {
       }
     }, 1000); // Este temporizador se ejecuta cada segundo
 
+  } catch (error) {
+    clearInterval(temporizador);
+
+  }
   });
 
 
@@ -159,6 +166,7 @@ io.on('connection', (socket) => {
     console.log('comenzarCarrera',objetoSocket);
     io.in(objetoSocket.id).emit("comenzarCarrera", objetoSocket);
     
+
   });
 
   socket.on('correrDuelo', (objetoCorrer) => {
@@ -174,20 +182,24 @@ io.on('connection', (socket) => {
   
 
   socket.on('usuarioUnidoADuelo', (objetoSocket) => {
- console.log('usuario unido a duelo',objetoSocket);
- let sala = listaDuelosSalas.find(objeto => objeto.id === objetoSocket.idSala);
-console.log('SALA',sala);
- if (sala.usuario1.usuario===objetoSocket.usuario) {
-  sala.usuario1.listo =true;
+ try {
+  let sala = listaDuelosSalas.find(objeto => objeto.id === objetoSocket.idSala);
+  ;
+   if (sala.usuario1.usuario===objetoSocket.usuario) {
+    sala.usuario1.listo =true;
+   }
+  
+   if (sala.usuario2.usuario===objetoSocket.usuario) {
+    sala.usuario2.listo =true;
+   }
+  
+   io.in(objetoSocket.idSala).emit("usuarioUnidoADuelo", sala);
+  
+ } 
+
+ catch (error) {
+  
  }
-
- if (sala.usuario2.usuario===objetoSocket.usuario) {
-  sala.usuario2.listo =true;
- }
-
- io.in(objetoSocket.idSala).emit("usuarioUnidoADuelo", sala);
-
-    
   });
 
 
