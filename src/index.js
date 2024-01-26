@@ -74,7 +74,7 @@ io.on('connection', (socket) => {
   socket.on('buscarPartida', (objetoSocket) => {
     try {
       
- 
+ console.log('llegamos a buscar back',objetoSocket);
     objetoSocket.socket = socket.id;
     listaDuelos.push(objetoSocket)
 
@@ -117,8 +117,9 @@ io.on('connection', (socket) => {
         }
 
         listaDuelosSalas.push(objetoSala)
-        socket.emit("partidaEncontrada",primerRival)
-        socket.to(primerRival.socket).emit("partidaEncontrada",objetoSocket)
+    
+        socket.emit("partidaEncontrada",objetoSala)
+        socket.to(primerRival.socket).emit("partidaEncontrada",objetoSala)
 
         // Puedes continuar con el código después de encontrar al primer rival
       } else if (tiempoTranscurrido >= maxTiempoSegundos) {
@@ -146,18 +147,46 @@ io.on('connection', (socket) => {
 
 
   socket.on('aceptarDuelo', (objetoSocket) => {
-    socket.join(objetoSocket.idSala);
+    let salaEncontrada = listaDuelosSalas.find(sala => sala.id === objetoSocket.id);
+    socket.join(objetoSocket.id);
+
+    if (objetoSocket.realizaEvento ==='usuario1') {
+      salaEncontrada['usuario1'].aceptado=true;
+      salaEncontrada['usuario1'].listo=false;
+    }else {
+      salaEncontrada['usuario2'].aceptado=true;
+      salaEncontrada['usuario2'].listo=false;
+    }
+    io.to(objetoSocket.id).emit("aceptarDuelo", salaEncontrada);
+
   });
 
 
   socket.on('rechazarDuelo', (objetoSocket) => {
-    let salaEncontrada = listaDuelosSalas.findIndex(sala => sala.id === objetoSocket.idSala);
+    let salaEncontrada = listaDuelosSalas.findIndex(sala => sala.id === objetoSocket.id);
     if (salaEncontrada !== -1) {
       listaDuelos.splice(salaEncontrada, 1);
 
     }
 
+
     io.to(objetoSocket.socket).emit("rechazarDuelo", objetoSocket);
+
+  });
+
+
+  socket.on('rechazarDueloSala', (objetoSocket) => {
+    console.log('rechazando',objetoSocket)
+    let salaEncontrada = listaDuelosSalas.findIndex(sala => sala.id === objetoSocket.id);
+    if (salaEncontrada !== -1) {
+      listaDuelos.splice(salaEncontrada, 1);
+
+    }
+
+    socket.leave(objetoSocket.id);
+    socket.to(objetoSocket.id).emit('rechazarDueloSala', objetoSocket);
+
+    // io.to(objetoSocket.idSala).emit("rechazarDueloSala", objetoSocket);
 
   });
 
@@ -183,17 +212,18 @@ io.on('connection', (socket) => {
 
   socket.on('usuarioUnidoADuelo', (objetoSocket) => {
  try {
-  let sala = listaDuelosSalas.find(objeto => objeto.id === objetoSocket.idSala);
-  ;
-   if (sala.usuario1.usuario===objetoSocket.usuario) {
+  console.log('llegamos',objetoSocket);
+  let sala = listaDuelosSalas.find(objeto => objeto.id === objetoSocket.id);
+  console.log('aqui',sala.usuario1.usuario);
+   if (sala.usuario1.usuario===objetoSocket.realizaEvento) {
     sala.usuario1.listo =true;
    }
   
-   if (sala.usuario2.usuario===objetoSocket.usuario) {
+   if (sala.usuario2.usuario===objetoSocket.realizaEvento) {
     sala.usuario2.listo =true;
    }
   
-   io.in(objetoSocket.idSala).emit("usuarioUnidoADuelo", sala);
+   io.in(objetoSocket.id).emit("usuarioUnidoADuelo", sala);
   
  } 
 
