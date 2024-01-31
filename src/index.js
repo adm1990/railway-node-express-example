@@ -65,7 +65,6 @@ io.on('connection', (socket) => {
       }
 
 
-
     }
 
   });
@@ -96,6 +95,7 @@ io.on('connection', (socket) => {
         return;
       }
 
+      
       if (primerRivalPosicion !== -1) {
         clearInterval(temporizador);
         const nuevoUUID = uuidv4();
