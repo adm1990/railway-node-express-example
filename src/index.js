@@ -141,6 +141,7 @@ io.on('connection', (socket) => {
 
   } catch (error) {
     clearInterval(temporizador);
+    socket.emit("partidaEncontrada","Limite de tiempo")
 
   }
   });
