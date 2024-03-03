@@ -115,6 +115,7 @@ io.on('connection', (socket) => {
           usuario1:objetoSocket,
           usuario2:primerRival      
         }
+        
 
         listaDuelosSalas.push(objetoSala)
     
