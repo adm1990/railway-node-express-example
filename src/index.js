@@ -202,11 +202,12 @@ io.on('connection', (socket) => {
 
   socket.on('correrDuelo', (objetoCorrer) => {
  
-    console.log('correrDuelo',objetoCorrer);
     const puntuacionObj = {
-      puntuacion:objetoCorrer.puntuacion
+      objetoCorrer:objetoCorrer
     }
-    io.to(objetoCorrer.socket).emit("correrDuelo", puntuacionObj);
+    // io.to(objetoCorrer.socket).emit("correrDuelo", puntuacionObj);
+    io.in(objetoCorrer.id).emit("correrDuelo", puntuacionObj);
+    
     
   });
 
