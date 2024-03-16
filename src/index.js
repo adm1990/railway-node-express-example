@@ -19,13 +19,33 @@ const io = new WebSocketServer(server, {
 
 const listaLobbies = [];
 const listaDuelos = [];
+const usuariosConectados = [];
 const listaDuelosSalas = [];
 app.use(express.static(__dirname + '/public'))
 app.use(compression());
 
 io.on('connection', (socket) => {
 
-  socket.emit('nuevaConexion');
+
+  socket.on('meHeConectado', (objetoSocket) => {
+    objetoSocket.socket = socket.id
+
+    const existeUsuario = usuariosConectados
+    .findIndex(usuario => usuario.idUsuario === objetoSocket.idUsuario);
+    if (existeUsuario === -1) {
+
+      usuariosConectados.push(objetoSocket)
+
+    }
+
+
+    io.emit("meHeConectado", usuariosConectados);
+
+
+  });
+
+
+
   socket.on('conectarSala', (objetoSocket) => {
     objetoSocket.usuario.socket = socket.id;
 
@@ -73,7 +93,6 @@ io.on('connection', (socket) => {
   socket.on('buscarPartida', (objetoSocket) => {
     try {
       
- console.log('llegamos a buscar back',objetoSocket);
     objetoSocket.socket = socket.id;
     listaDuelos.push(objetoSocket)
 
@@ -129,14 +148,9 @@ io.on('connection', (socket) => {
         listaDuelos.splice(miUsuarioEnDuelo, 1);
         socket.emit("partidaEncontrada","Limite de tiempo")
       
-        console.log(`Se ha agotado el tiempo después de ${maxTiempoSegundos} segundos. No se encontró un rival.`);
         // Puedes manejar la situación cuando no se encuentra un rival después del tiempo especificado
       } else {
         socket.emit("partidaEncontrada","buscando...")
-
-        console.log(`Tiempo transcurrido: ${tiempoTranscurrido} segundos. Continuando la búsqueda...`);
-        // Puedes agregar un pequeño retraso aquí si es necesario
-        // await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }, 1000); // Este temporizador se ejecuta cada segundo
 
@@ -178,7 +192,6 @@ io.on('connection', (socket) => {
 
 
   socket.on('rechazarDueloSala', (objetoSocket) => {
-    console.log('rechazando',objetoSocket)
     let salaEncontrada = listaDuelosSalas.findIndex(sala => sala.id === objetoSocket.id);
     if (salaEncontrada !== -1) {
       listaDuelos.splice(salaEncontrada, 1);
@@ -194,7 +207,6 @@ io.on('connection', (socket) => {
 
   socket.on('comenzarCarrera', (objetoSocket) => {
  
-    console.log('comenzarCarrera',objetoSocket);
     io.in(objetoSocket.id).emit("comenzarCarrera", objetoSocket);
     
 
@@ -215,9 +227,7 @@ io.on('connection', (socket) => {
 
   socket.on('usuarioUnidoADuelo', (objetoSocket) => {
  try {
-  console.log('llegamos',objetoSocket);
   let sala = listaDuelosSalas.find(objeto => objeto.id === objetoSocket.id);
-  console.log('aqui',sala.usuario1.usuario);
    if (sala.usuario1.usuario===objetoSocket.realizaEvento) {
     sala.usuario1.listo =true;
    }
@@ -372,6 +382,10 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('traerListaUsuariosOnline', (datos) => {
+    socket.emit('traerListaUsuariosOnline', usuariosConectados);
+
+  });
 
 
   socket.on('lanzarObjeto', (objetoSocket) => {
@@ -537,7 +551,27 @@ io.on('connection', (socket) => {
   });
 
 
+  socket.on('forceDisconnect', function(){
+    const existeUsuario = usuariosConectados
+    .findIndex(usuario => usuario.socket === socket.id);
+   
+    if (existeUsuario > -1) {
+      usuariosConectados.splice(existeUsuario, 1); 
+    }
+
+    socket.broadcast.emit("meHeDesConectado",usuariosConectados);
+  });
+
   socket.on('disconnect', () => {
+    const existeUsuario = usuariosConectados
+    .findIndex(usuario => usuario.socket === socket.id);
+   
+    if (existeUsuario > -1) {
+      usuariosConectados.splice(existeUsuario, 1); 
+    }
+
+    socket.broadcast.emit("meHeDesConectado",usuariosConectados);
+
   });
 })
 
