@@ -36,6 +36,11 @@ io.on('connection', (socket) => {
 
       usuariosConectados.push(objetoSocket)
 
+    } else {
+      usuariosConectados.splice(existeUsuario, 1); 
+      usuariosConectados.push(objetoSocket)
+
+
     }
 
 
