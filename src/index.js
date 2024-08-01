@@ -27,6 +27,8 @@ app.use(compression());
 io.on('connection', (socket) => {
 
 
+
+  // test
   socket.on('meHeConectado', (objetoSocket) => {
     objetoSocket.socket = socket.id
 
