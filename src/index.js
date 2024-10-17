@@ -26,11 +26,13 @@ app.use(compression());
 
 io.on('connection', (socket) => {
 
+console.log('conectado');
 
 
   // test
   socket.on('meHeConectado', (objetoSocket) => {
     objetoSocket.socket = socket.id
+console.log('lanzamos');
 
     const existeUsuario = usuariosConectados
     .findIndex(usuario => usuario.idUsuario === objetoSocket.idUsuario);
